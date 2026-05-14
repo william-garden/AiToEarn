@@ -44,6 +44,8 @@ export interface ChannelManagerState {
   onAuthSuccess: ((account: SocialAccount, platform: PlatType) => void) | null
   /** 是否为新用户（没有任何账号） */
   isNewUser: boolean
+  /** 是否需要选择Facebook Pages（授权成功后自动触发） */
+  needSelectFacebookPage: boolean
 }
 
 /** 频道管理器方法 */
@@ -80,6 +82,8 @@ export interface ChannelManagerMethods {
   reset: () => void
   /** 检查是否为新用户 */
   checkIsNewUser: () => void
+  /** 设置需要选择Facebook Pages的状态 */
+  setNeedSelectFacebookPage: (need: boolean) => void
 }
 
 /** 授权URL响应 */

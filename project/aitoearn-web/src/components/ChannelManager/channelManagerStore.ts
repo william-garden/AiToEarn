@@ -76,6 +76,7 @@ const initialState: ChannelManagerState = {
   targetSpaceId: null,
   onAuthSuccess: null,
   isNewUser: false,
+  needSelectFacebookPage: false,
 }
 
 function getInitialState(): ChannelManagerState {
@@ -628,6 +629,12 @@ export const useChannelManagerStore = create(
         // 调用外部回调
         if (onAuthSuccess && platform) {
           onAuthSuccess(account, platform)
+        }
+
+        // Facebook授权成功后，提示用户选择Page
+        if (platform === PlatType.Facebook) {
+          toast.info('Facebook授权成功！请到发布流程中选择您的Page主页')
+          set({ needSelectFacebookPage: true })
         }
 
         // 移动端保持原筛选状态，PC 端切换到授权平台
