@@ -76,6 +76,7 @@ const initialState: ChannelManagerState = {
   targetSpaceId: null,
   onAuthSuccess: null,
   isNewUser: false,
+  needSelectFacebookPage: false,
 }
 
 function getInitialState(): ChannelManagerState {
@@ -630,6 +631,9 @@ export const useChannelManagerStore = create(
           onAuthSuccess(account, platform)
         }
 
+        // Facebook授权成功后，标记需要选择Page
+        const isFacebook = platform === PlatType.Facebook
+
         // 移动端保持原筛选状态，PC 端切换到授权平台
         const isMobile
           = typeof window !== 'undefined'
@@ -637,12 +641,14 @@ export const useChannelManagerStore = create(
 
         // 重置状态，跳转到主页
         set({
-          currentView: 'main',
+          currentView: isFacebook ? 'main' : 'main',
           selectedPlatform: isMobile
             ? selectedPlatform
             : (platform || 'all'),
           authState: { ...initialAuthState },
           isNewUser: false,
+          // 如果是Facebook，标记需要选择Page
+          needSelectFacebookPage: isFacebook,
         })
       },
 
@@ -657,6 +663,11 @@ export const useChannelManagerStore = create(
         const accountList = useAccountStore.getState().accountList
         set({ isNewUser: accountList.length === 0 })
       },
+
+      /** 设置需要选择Facebook Pages的状态 */
+      setNeedSelectFacebookPage(need: boolean) {
+        set({ needSelectFacebookPage: need })
+      }
     }
 
     return methods
