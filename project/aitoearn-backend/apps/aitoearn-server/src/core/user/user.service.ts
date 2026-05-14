@@ -1,7 +1,8 @@
 import type { Locale } from '@yikart/common'
 import { Injectable, Logger } from '@nestjs/common'
 import { QueueService } from '@yikart/aitoearn-queue'
-import { AppException, getLocale, ResponseCode } from '@yikart/common'
+import { AppException, CreditsType, getLocale, ResponseCode } from '@yikart/common'
+import { AddCreditsDto } from '@yikart/helpers'
 import { MaterialGroupRepository, MediaGroupRepository, User, UserAiInfo, UserRepository, UserStatus, UserType } from '@yikart/mongodb'
 import { PsChannel, RedisPubSubService, RedisService } from '@yikart/redis'
 import axios from 'axios'
@@ -22,6 +23,7 @@ export class UserService {
     private readonly redisPubSubService: RedisPubSubService,
     private readonly materialGroupRepository: MaterialGroupRepository,
     private readonly mediaGroupRepository: MediaGroupRepository,
+    private readonly creditsHelper: CreditsHelperService,
   ) {
     this.oauth2Client = new google.auth.OAuth2()
   }
@@ -298,6 +300,21 @@ export class UserService {
     // Generate invite code
     await this.generateUsePopularizeCode(user.id)
     this.redisPubSubService.emit(PsChannel.USER_CREATE, user)
+
+    // Grant registration bonus credits (500 credits = $5)
+    // This fixes issue #505: new users have no credits in Docker deployment
+    const REGISTRATION_BONUS = 500 // 500 credits ($5 value)
+    try {
+      await this.creditsHelper.addCredits({
+        userId: user.id,
+        amount: REGISTRATION_BONUS,
+        type: CreditsType.RegisterBonus,
+        description: 'Registration bonus',
+      })
+      this.logger.log({ userId: user.id, amount: REGISTRATION_BONUS }, 'Registration bonus granted')
+    } catch (error) {
+      this.logger.error({ userId: user.id, error }, 'Failed to grant registration bonus')
+    }
   }
 
   async setAiConfig(userId: string, aiConfig: Partial<UserAiInfo>): Promise<boolean> {
